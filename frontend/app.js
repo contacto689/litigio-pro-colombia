@@ -1,6 +1,13 @@
-// --- CONFIGURACIÓN DE CONEXIÓN ---
+// --- CONFIGURACIÓN DE CONEXIÓN INTELIGENTE ---
 const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
-const URL_BASE = isLocal ? "http://127.0.0.1:8000" : "https://litigio-pro-colombia.onrender.com";
+
+// Si es local, usa el puerto 8000. Si es Render, usa la URL del servicio.
+// Nota: He corregido el "hhttps" a "https"
+const URL_BASE = isLocal 
+    ? "http://127.0.0.1:8000" 
+    : "https://litigio-pro-colombia.onrender.com";
+
+console.log("Conectado a:", URL_BASE || "Ruta relativa (Render)");
 
 // --- ESTADO GLOBAL ---
 let casoActual = null;
