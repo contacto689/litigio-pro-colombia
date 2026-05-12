@@ -1,20 +1,31 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import google.generativeai as genai
 import os
 import json
 from dotenv import load_dotenv
 
-# Carga de variables de entorno
+# 1. Carga de variables de entorno
 load_dotenv()
 
-app = Flask(__name__)
+# 2. Configuración de Flask para servir el HTML desde la carpeta 'frontend'
+app = Flask(__name__, static_folder='frontend', static_url_path='')
+
 # CORS configurado para permitir todo en desarrollo local
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Configuración de Google Gemini
+# 3. Configuración de Google Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
+# Usamos el modelo estándar para asegurar compatibilidad en Render
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# --- RUTA PARA MOSTRAR EL SITIO WEB (Evita el error 404) ---
+@app.route('/')
+def index():
+    """Sirve el archivo index.html cuando entras al enlace principal."""
+    return send_from_directory(app.static_folder, 'index.html')
+
+# --- ENDPOINTS DE LA API ---
 
 @app.route('/generar-casos', methods=['POST'])
 def generar_casos():
@@ -93,6 +104,7 @@ def debatir():
     except Exception as e:
         return jsonify({"error": str(e)}), 200
 
+# 4. Configuración del puerto para Render o Local
 if __name__ == '__main__':
     if os.environ.get('RENDER'):
         port = int(os.environ.get('PORT', 5000))
