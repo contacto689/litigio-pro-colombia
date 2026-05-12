@@ -1,6 +1,6 @@
 // --- CONFIGURACIÓN DE CONEXIÓN ---
 const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
-const URL_BASE = isLocal ? "http://127.0.0.1:8000" : "https://litigio-pro-mvpa.onrender.com";
+const URL_BASE = isLocal ? "http://127.0.0.1:8000" : "https://litigio-pro-colombia.onrender.com";
 
 // --- ESTADO GLOBAL ---
 let casoActual = null;
