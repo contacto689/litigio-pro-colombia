@@ -29,7 +29,7 @@ def index():
 
 @app.route('/generar-casos', methods=['POST'])
 def generar_casos():
-    """Genera 5 expedientes basados en leyes y geografía colombiana."""
+    """Genera 5 expedientes con un sistema de limpieza de JSON robusto."""
     data = request.json
     categoria = data.get('categoria', 'Derecho Penal')
     dificultad = data.get('dificultad', 'Intermedio')
@@ -44,20 +44,38 @@ def generar_casos():
     - Nombra barrios o lugares icónicos de esas ciudades para dar realismo.
 
     REQUISITOS JURÍDICOS:
-    - Los conflictos deben estar basados en el bloque de constitucionalidad de Colombia y leyes locales (Código Penal Colombiano, Código Civil, etc.)
+    - Los conflictos deben estar basados en el bloque de constitucionalidad de Colombia y leyes locales.
 
-    Responde EXCLUSIVAMENTE con un array JSON puro, sin bloques de markdown:
+    Responde EXCLUSIVAMENTE con un array JSON puro.
     [
-      {{"id": 1, "titulo": "Nombre del Caso", "descripcion": "Hechos detallados ocurridos en Colombia"}}
+      {{"id": 1, "titulo": "Nombre del Caso", "descripcion": "Hechos..."}}
     ]
     """
     try:
         response = model.generate_content(prompt)
-        texto_limpio = response.text.replace('```json', '').replace('```', '').strip()
-        return texto_limpio, 200, {'Content-Type': 'application/json'}
+        raw_text = response.text.strip()
+        
+        # Limpieza de bloques de código markdown si la IA los incluye
+        if "```" in raw_text:
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:].strip()
+        
+        # Validamos que el JSON sea correcto antes de enviar
+        json_data = json.loads(raw_text)
+        return jsonify(json_data)
+        
     except Exception as e:
         print(f"Error en generación: {e}")
-        return jsonify([{"id": 0, "titulo": "Error", "descripcion": "Problema al generar casos colombianos."}]), 200
+        # Casos de respaldo por si falla la conexión o el formato
+        backup = [
+            {"id": 1, "titulo": "Litigio en el Barrio Rosales", "descripcion": "Conflicto de propiedad horizontal en Bogotá."},
+            {"id": 2, "titulo": "Infracción en Comuna 13", "descripcion": "Caso penal sobre responsabilidad civil en Medellín."},
+            {"id": 3, "titulo": "Disputa Comercial en Bocagrande", "descripcion": "Incumplimiento de contrato mercantil en Cartagena."},
+            {"id": 4, "titulo": "Proceso Laboral en Cali", "descripcion": "Despido injustificado en planta industrial del Valle."},
+            {"id": 5, "titulo": "Restitución en el Eje Cafetero", "descripcion": "Reclamo de linderos en finca cafetera de Quindío."}
+        ]
+        return jsonify(backup)
 
 @app.route('/debatir', methods=['POST'])
 def debatir():
@@ -82,25 +100,30 @@ def debatir():
 
     REGLAS DE ORO:
     1. Solo puedes citar la Constitución Política de Colombia de 1991 y leyes colombianas.
-    2. Si el usuario cita leyes de otros países o principios que no aplican en Colombia, castiga su puntuación en 'Fundamentación Legal'.
-    3. Si la dificultad es 'Avanzado', exige citas exactas de artículos (ej: Art. 29 de la Constitución, Ley 906, etc.)
+    2. Si el usuario cita leyes de otros países, castiga su puntuación.
 
     Responde ÚNICAMENTE en formato JSON puro:
     {{
-      "respuesta_ia": "Tu refutación legal basada en ley colombiana (máx 90 palabras)",
+      "respuesta_ia": "Tu refutación legal (máx 90 palabras)",
       "analisis": {{
         "fundamentacion_legal": 0, "coherencia_logica": 0, "persuasion_retorica": 0,
-        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Una línea de crítica",
+        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Crítica breve",
         "habilidades": {{ "estrategia": 0, "objeciones": 0, "claridad": 0, "evidencia": 0, "psicologia": 0 }}
       }},
       "finalizar": {str(finalizar).lower()},
-      "sentencia": "Si finalizar es true, dicta una sentencia magistral 'En nombre de la República de Colombia y por autoridad de la Ley'."
+      "sentencia": "Si finalizar es true, dicta sentencia 'En nombre de la República de Colombia'."
     }}
     """
     try:
         response = model.generate_content(prompt)
-        texto_limpio = response.text.replace('```json', '').replace('```', '').strip()
-        return texto_limpio, 200, {'Content-Type': 'application/json'}
+        raw_text = response.text.strip()
+        
+        if "```" in raw_text:
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:].strip()
+                
+        return raw_text, 200, {'Content-Type': 'application/json'}
     except Exception as e:
         return jsonify({"error": str(e)}), 200
 
