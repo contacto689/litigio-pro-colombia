@@ -35,20 +35,19 @@ def generar_casos():
     dificultad = data.get('dificultad', 'Intermedio')
 
     prompt = f"""
-    Eres un Magistrado experto en el sistema jurídico de COLOMBIA. 
-    Genera 5 casos ficticios de {categoria} ambientados en COLOMBIA.
-    Nivel de complejidad: {dificultad}.
-    
-    REQUISITOS GEOGRÁFICOS:
-    - Los hechos deben ocurrir en ciudades colombianas (ej: Bogotá, Medellín, Barranquilla, Cali, Bucaramanga, etc.)
-    - Nombra barrios o lugares icónicos de esas ciudades para dar realismo.
+    Eres un Magistrado de la Corte Suprema de Justicia de COLOMBIA. 
+    Genera 5 expedientes judiciales detallados de {categoria} en COLOMBIA.
+    Nivel: {dificultad}.
 
-    REQUISITOS JURÍDICOS:
-    - Los conflictos deben estar basados en el bloque de constitucionalidad de Colombia y leyes locales.
+    Cada descripción debe ser EXTENSA (mínimo 150 palabras) e incluir:
+    1. CONTEXTO: Lugar exacto en Colombia y fecha.
+    2. HECHOS: Relato detallado de lo sucedido.
+    3. CARGOS/PRETENSIONES: Qué se busca legalmente.
+    4. PRUEBAS: Menciona un par de pruebas (testimonios, videos de seguridad, contratos).
 
-    Responde EXCLUSIVAMENTE con un array JSON puro.
+    Responde ÚNICAMENTE un array JSON:
     [
-      {{"id": 1, "titulo": "Nombre del Caso", "descripcion": "Hechos..."}}
+      {{"id": 1, "titulo": "Nombre Impactante", "descripcion": "Texto largo y jurídico aquí..."}}
     ]
     """
     try:
