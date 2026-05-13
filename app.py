@@ -29,14 +29,14 @@ def index():
 
 @app.route('/generar-casos', methods=['POST'])
 def generar_casos():
-    """Genera 5 expedientes basados en leyes y geografía colombiana."""
+    """Genera 2 expedientes basados en leyes y geografía colombiana."""
     data = request.json
     categoria = data.get('categoria', 'Derecho Penal')
     dificultad = data.get('dificultad', 'Intermedio')
 
     prompt = f"""
     Eres un Magistrado experto en el sistema jurídico de COLOMBIA. 
-    Genera 5 casos ficticios de {categoria} ambientados en COLOMBIA.
+    Genera 2 casos ficticios de {categoria} ambientados en COLOMBIA.
     Nivel de complejidad: {dificultad}.
     
     REQUISITOS GEOGRÁFICOS:
