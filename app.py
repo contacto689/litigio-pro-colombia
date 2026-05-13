@@ -14,13 +14,11 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 # 3. Configuración de Google Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-# Usamos el modelo estable 1.5-flash
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- RUTA RAÍZ: ESTA ES LA QUE EVITA EL ERROR 404 ---
+# --- RUTA RAÍZ: Muestra el index.html al entrar al link ---
 @app.route('/')
 def index():
-    """Sirve el archivo index.html desde la carpeta frontend."""
     return send_from_directory(app.static_folder, 'index.html')
 
 # --- ENDPOINTS DE LA API ---
@@ -38,17 +36,17 @@ def generar_casos():
     Nivel: {dificultad}.
     
     Cada 'descripcion' debe ser EXTENSA (mínimo 200 palabras) e incluir:
-    1. Hechos: Relato detallado con lugares exactos en Colombia (barrios, ciudades).
-    2. Pruebas: Menciona testimonios, documentos o videos disponibles.
-    3. Problema Jurídico: La controversia a resolver.
+    1. Hechos: Relato detallado con barrios y ciudades reales de Colombia.
+    2. Pruebas: Menciona testimonios, documentos o videos.
+    3. Problema Jurídico central.
 
-    Responde ÚNICAMENTE con un array JSON.
+    Responde ÚNICAMENTE con un array JSON:
     [
-      {{"id": 1, "titulo": "Nombre del Proceso", "descripcion": "Texto jurídico largo..."}}
+      {{"id": 1, "titulo": "Nombre del Caso", "descripcion": "Texto jurídico largo..."}}
     ]
     """
     try:
-        # Forzamos respuesta en formato JSON nativo
+        # Forzamos respuesta en formato JSON nativo (Más estable)
         response = model.generate_content(
             prompt,
             generation_config={"response_mime_type": "application/json"}
@@ -56,12 +54,7 @@ def generar_casos():
         return response.text, 200, {'Content-Type': 'application/json'}
     except Exception as e:
         print(f"Error en generación: {e}")
-        # Casos de respaldo por seguridad
-        backup = [
-            {"id": 1, "titulo": "Litigio de Tierras en Urabá", "descripcion": "Relato extenso sobre despojo y restitución de tierras bajo la Ley 1448..."},
-            {"id": 2, "titulo": "Responsabilidad Médica en Cali", "descripcion": "Caso detallado sobre presunta mala praxis en procedimiento estético..."}
-        ]
-        return jsonify(backup), 200
+        return jsonify([{"id": 1, "titulo": "Error", "descripcion": "No se pudo generar el caso."}]), 200
 
 @app.route('/debatir', methods=['POST'])
 def debatir():
@@ -79,7 +72,7 @@ def debatir():
     prompt = f"""
     Eres un litigante experto en Colombia ({contraparte}). Caso: {caso}.
     El usuario ({rol}) argumenta: "{argumento}".
-    Turno actual: {turnos}/8. Responde en JSON con: respuesta_ia, analisis, finalizar, sentencia.
+    Responde en formato JSON con: respuesta_ia, analisis, finalizar, sentencia.
     """
     try:
         response = model.generate_content(
@@ -92,6 +85,6 @@ def debatir():
 
 # 4. Configuración del puerto para Render
 if __name__ == '__main__':
-    # Render usa la variable PORT. En local usa el 5000 por defecto.
+    # Render asigna el puerto automáticamente. En local usa el 5000.
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
