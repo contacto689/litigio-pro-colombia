@@ -1,11 +1,15 @@
-// --- CONFIGURACIÓN DE CONEXIÓN ---
-// Esta línea es la clave: si NO estamos en localhost, la URL debe ser la de Render
+// --- CONFIGURACIÓN PARA GITHUB PAGES + RENDER ---
+
+// 1. Pon aquí la URL real que te dio Render al desplegar
+const URL_PROD = "https://litigio-pro-colombia.onrender.com"; 
+
+// 2. Detectar si estamos probando en casa o si ya estamos en la web
 const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
-// Detectar si estamos en local o en producción de forma automática
-const URL_BASE = window.location.origin; 
+// 3. La URL base SIEMPRE será la de Render si estamos en GitHub Pages
+const URL_BASE = isLocal ? "http://127.0.0.1:8000" : URL_PROD;
 
-console.log("Conectado a:", URL_BASE);
+console.log("🚀 Conectando con el estrado en:", URL_BASE);
 
 // --- ESTADO GLOBAL ---
 let casoActual = null;

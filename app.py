@@ -12,7 +12,15 @@ load_dotenv()
 app = Flask(__name__, static_folder='frontend', static_url_path='')
 
 # CORS configurado para permitir todo en desarrollo local
-CORS(app, resources={r"/*": {"origins": "*"}})
+# Modifica la línea de CORS en app.py
+# Reemplaza 'tu-usuario.github.io' por tu nombre real de GitHub
+CORS(app, resources={r"/*": {
+    "origins": [
+        "https://tu-usuario.github.io", 
+        "http://127.0.0.1:5500", # Para que te siga funcionando el Live Server
+        "http://localhost:8000"
+    ]
+}})
 
 # 3. Configuración de Google Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
