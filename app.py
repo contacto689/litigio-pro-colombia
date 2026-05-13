@@ -29,52 +29,55 @@ def index():
 
 @app.route('/generar-casos', methods=['POST'])
 def generar_casos():
-    """Genera 5 expedientes con un sistema de limpieza de JSON robusto."""
     data = request.json
     categoria = data.get('categoria', 'Derecho Penal')
     dificultad = data.get('dificultad', 'Intermedio')
 
+    # Prompt ultra-detallado para obligar a la IA a escribir más
     prompt = f"""
-    Eres un Magistrado de la Corte Suprema de Justicia de COLOMBIA. 
-    Genera 5 expedientes judiciales detallados de {categoria} en COLOMBIA.
-    Nivel: {dificultad}.
+    Actúa como un Magistrado de la República de Colombia.
+    Genera 5 expedientes judiciales de {categoria} para nivel {dificultad}.
+    
+    Cada 'descripcion' debe ser un relato jurídico profesional de al menos 3 párrafos que incluya:
+    - Hechos relevantes (Lugar exacto en Colombia, fecha y hora).
+    - Pruebas recaudadas (testimonios, dictámenes periciales, grabaciones).
+    - El problema jurídico central a resolver.
 
-    Cada descripción debe ser EXTENSA (mínimo 150 palabras) e incluir:
-    1. CONTEXTO: Lugar exacto en Colombia y fecha.
-    2. HECHOS: Relato detallado de lo sucedido.
-    3. CARGOS/PRETENSIONES: Qué se busca legalmente.
-    4. PRUEBAS: Menciona un par de pruebas (testimonios, videos de seguridad, contratos).
-
-    Responde ÚNICAMENTE un array JSON:
+    IMPORTANTE: Responde EXCLUSIVAMENTE con el array JSON.
+    Formato:
     [
-      {{"id": 1, "titulo": "Nombre Impactante", "descripcion": "Texto largo y jurídico aquí..."}}
+      {{"id": 1, "titulo": "Nombre del Proceso", "descripcion": "Relato extenso..."}}
     ]
     """
+    
     try:
         response = model.generate_content(prompt)
         raw_text = response.text.strip()
         
-        # Limpieza de bloques de código markdown si la IA los incluye
-        if "```" in raw_text:
-            raw_text = raw_text.split("```")[1]
-            if raw_text.startswith("json"):
-                raw_text = raw_text[4:].strip()
+        # Limpieza avanzada para ignorar cualquier texto que no sea el JSON
+        start_idx = raw_text.find('[')
+        end_idx = raw_text.rfind(']') + 1
+        if start_idx != -1 and end_idx != -1:
+            raw_text = raw_text[start_idx:end_idx]
         
-        # Validamos que el JSON sea correcto antes de enviar
         json_data = json.loads(raw_text)
         return jsonify(json_data)
         
     except Exception as e:
-        print(f"Error en generación: {e}")
-        # Casos de respaldo por si falla la conexión o el formato
-        backup = [
-            {"id": 1, "titulo": "Litigio en el Barrio Rosales", "descripcion": "Conflicto de propiedad horizontal en Bogotá."},
-            {"id": 2, "titulo": "Infracción en Comuna 13", "descripcion": "Caso penal sobre responsabilidad civil en Medellín."},
-            {"id": 3, "titulo": "Disputa Comercial en Bocagrande", "descripcion": "Incumplimiento de contrato mercantil en Cartagena."},
-            {"id": 4, "titulo": "Proceso Laboral en Cali", "descripcion": "Despido injustificado en planta industrial del Valle."},
-            {"id": 5, "titulo": "Restitución en el Eje Cafetero", "descripcion": "Reclamo de linderos en finca cafetera de Quindío."}
-        ]
-        return jsonify(backup)
+        print(f"Error: {e}")
+        # Si falla, estos casos de respaldo ahora son más largos también
+        return jsonify([
+            {
+                "id": 1, 
+                "titulo": "Homicidio Preterintencional en Bogotá", 
+                "descripcion": "Los hechos ocurrieron en el barrio Chapinero, donde tras una riña recíproca, el indiciado golpeó a la víctima provocando una caída fatal. Se cuenta con videos de seguridad y tres testimonios clave que indican falta de intención de matar."
+            },
+            {
+                "id": 2, 
+                "titulo": "Restitución de Tierras en Urabá", 
+                "descripcion": "Un grupo de reclamantes solicita la devolución de 50 hectáreas despojadas en 1998. El opositor alega compra de buena fe exenta de culpa. El caso requiere análisis de la Ley 1448 de 2011."
+            }
+        ])
 
 @app.route('/debatir', methods=['POST'])
 def debatir():
