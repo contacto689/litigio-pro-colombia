@@ -33,15 +33,29 @@ def generar_casos():
     categoria = data.get('categoria', 'Derecho Penal')
     dificultad = data.get('dificultad', 'Intermedio')
 
-    # Prompt ultra-reforzado
-    prompt = f"""
-    Eres un Magistrado de Colombia. Genera 5 expedientes judiciales de {categoria} (Nivel {dificultad}).
-    Cada caso debe tener una 'descripcion' muy extensa (mínimo 200 palabras) con hechos, pruebas y lugar en Colombia.
-    
-    Responde estrictamente en este formato JSON:
-    [
-      {{"id": 1, "titulo": "...", "descripcion": "..."}}
-    ]
+ prompt = f"""
+    Eres un litigante de élite ({contraparte}) experto en el derecho de COLOMBIA.
+    Estamos en una audiencia en una sala de justicia colombiana.
+    Nivel de debate: {dificultad}. Caso: {caso}.
+    El usuario ({rol}) argumenta: "{argumento}".
+    Turno actual: {turnos}/8.
+
+    REGLAS DE ORO:
+    1. Solo puedes citar la Constitución Política de Colombia de 1991 y leyes colombianas.
+    2. Si el usuario cita leyes de otros países o principios que no aplican en Colombia, castiga su puntuación en 'Fundamentación Legal'.
+    3. Si la dificultad es 'Avanzado', exige citas exactas de artículos (ej: Art. 29 de la Constitución, Ley 906, etc.)
+
+    Responde ÚNICAMENTE en formato JSON puro:
+    {{
+      "respuesta_ia": "Tu refutación legal basada en ley colombiana (máx 90 palabras)",
+      "analisis": {{
+        "fundamentacion_legal": 0, "coherencia_logica": 0, "persuasion_retorica": 0,
+        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Una línea de crítica",
+        "habilidades": {{ "estrategia": 0, "objeciones": 0, "claridad": 0, "evidencia": 0, "psicologia": 0 }}
+      }},
+      "finalizar": {str(finalizar).lower()},
+      "sentencia": "Si finalizar es true, dicta una sentencia magistral 'En nombre de la República de Colombia y por autoridad de la Ley'."
+    }}
     """
     
     try:
