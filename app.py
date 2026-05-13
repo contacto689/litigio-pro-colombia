@@ -33,49 +33,44 @@ def generar_casos():
     categoria = data.get('categoria', 'Derecho Penal')
     dificultad = data.get('dificultad', 'Intermedio')
 
-    # Prompt ultra-detallado para obligar a la IA a escribir más
+    # Prompt ultra-reforzado
     prompt = f"""
-    Actúa como un Magistrado de la República de Colombia.
-    Genera 5 expedientes judiciales de {categoria} para nivel {dificultad}.
+    Eres un Magistrado de Colombia. Genera 5 expedientes judiciales de {categoria} (Nivel {dificultad}).
+    Cada caso debe tener una 'descripcion' muy extensa (mínimo 200 palabras) con hechos, pruebas y lugar en Colombia.
     
-    Cada 'descripcion' debe ser un relato jurídico profesional de al menos 3 párrafos que incluya:
-    - Hechos relevantes (Lugar exacto en Colombia, fecha y hora).
-    - Pruebas recaudadas (testimonios, dictámenes periciales, grabaciones).
-    - El problema jurídico central a resolver.
-
-    IMPORTANTE: Responde EXCLUSIVAMENTE con el array JSON.
-    Formato:
+    Responde estrictamente en este formato JSON:
     [
-      {{"id": 1, "titulo": "Nombre del Proceso", "descripcion": "Relato extenso..."}}
+      {{"id": 1, "titulo": "...", "descripcion": "..."}}
     ]
     """
     
     try:
         response = model.generate_content(prompt)
-        raw_text = response.text.strip()
+        text = response.text.strip()
         
-        # Limpieza avanzada para ignorar cualquier texto que no sea el JSON
-        start_idx = raw_text.find('[')
-        end_idx = raw_text.rfind(']') + 1
-        if start_idx != -1 and end_idx != -1:
-            raw_text = raw_text[start_idx:end_idx]
-        
-        json_data = json.loads(raw_text)
-        return jsonify(json_data)
-        
+        # LIMPIEZA QUIRÚRGICA: Buscamos el inicio '[' y el final ']' del JSON
+        match = re.search(r'\[.*\]', text, re.DOTALL)
+        if match:
+            clean_json = match.group(0)
+            # Validamos que cargue como JSON
+            data_final = json.loads(clean_json)
+            return jsonify(data_final)
+        else:
+            raise ValueError("No se encontró un formato JSON válido")
+            
     except Exception as e:
-        print(f"Error: {e}")
-        # Si falla, estos casos de respaldo ahora son más largos también
+        print(f"Error detectado: {e}")
+        # CASOS DE RESPALDO EXTENSOS (Para que nunca veas textos cortos)
         return jsonify([
             {
                 "id": 1, 
-                "titulo": "Homicidio Preterintencional en Bogotá", 
-                "descripcion": "Los hechos ocurrieron en el barrio Chapinero, donde tras una riña recíproca, el indiciado golpeó a la víctima provocando una caída fatal. Se cuenta con videos de seguridad y tres testimonios clave que indican falta de intención de matar."
+                "titulo": "Falsedad en Documento Público - Bogotá", 
+                "descripcion": "En la ciudad de Bogotá, específicamente en la Notaría 100, se detectó una red de falsificación de escrituras públicas relacionadas con predios en el norte de la ciudad. El indiciado pretendía traspasar un inmueble valorado en 2.000 millones de pesos usando un poder falso. Las pruebas incluyen el peritaje grafológico de la firma del notario y los videos de las cámaras de seguridad donde se observa al sospechoso realizando el trámite con documentos apócrifos. El problema jurídico radica en determinar la autoría material y el dolo en la conducta."
             },
             {
                 "id": 2, 
-                "titulo": "Restitución de Tierras en Urabá", 
-                "descripcion": "Un grupo de reclamantes solicita la devolución de 50 hectáreas despojadas en 1998. El opositor alega compra de buena fe exenta de culpa. El caso requiere análisis de la Ley 1448 de 2011."
+                "titulo": "Responsabilidad Médica en Barranquilla", 
+                "descripcion": "En una clínica de alta complejidad en Barranquilla, se presentó una demanda por presunta mala praxis durante una cirugía estética. La paciente alega que no se le practicaron los exámenes preoperatorios necesarios, lo que derivó en una embolia pulmonar. La defensa del médico sostiene que los riesgos fueron informados y aceptados en el consentimiento informado. Las pruebas consisten en la historia clínica digital, el peritaje de Medicina Legal y el testimonio de la instrumentadora quirúrgica presente en el procedimiento."
             }
         ])
 
