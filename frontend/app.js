@@ -2,10 +2,8 @@
 // Esta línea es la clave: si NO estamos en localhost, la URL debe ser la de Render
 const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
-// IMPORTANTE: Cambié el "hhttps" por "https" y verifiqué la URL
-const URL_BASE = isLocal 
-    ? "http://127.0.0.1:8000" 
-    : "https://litigio-pro-colombia.onrender.com";
+// Detectar si estamos en local o en producción de forma automática
+const URL_BASE = window.location.origin; 
 
 console.log("Conectado a:", URL_BASE);
 
