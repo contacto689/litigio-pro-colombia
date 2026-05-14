@@ -1,15 +1,7 @@
-// --- CONFIGURACIÓN PARA GITHUB PAGES + RENDER ---
+// --- CONFIGURACIÓN PARA PRODUCCIÓN (RENDER) ---
+const URL_BASE = "https://litigio-pro-colombia.onrender.com"; 
 
-// 1. Pon aquí la URL real que te dio Render al desplegar
-const URL_PROD = "https://litigio-pro-colombia.onrender.com"; 
-
-// 2. Detectar si estamos probando en casa o si ya estamos en la web
-const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
-
-// 3. La URL base SIEMPRE será la de Render si estamos en GitHub Pages
-const URL_BASE = isLocal ? "http://127.0.0.1:8000" : URL_PROD;
-
-console.log("🚀 Conectando con el estrado en:", URL_BASE);
+console.log("🚀 Sistema conectado al estrado en:", URL_BASE);
 
 // --- ESTADO GLOBAL ---
 let casoActual = null;
@@ -30,7 +22,7 @@ const salaAudiencia = document.getElementById('sala-audiencia');
 // --- INICIALIZACIÓN DEL GRÁFICO DE RADAR ---
 function initRadar() {
     const ctx = document.getElementById('radarHabilidades').getContext('2d');
-    if (radarChart) radarChart.destroy(); // Limpiar si ya existe
+    if (radarChart) radarChart.destroy(); 
     
     radarChart = new Chart(ctx, {
         type: 'radar',
@@ -61,7 +53,7 @@ function initRadar() {
     });
 }
 
-// --- GENERACIÓN DE CASOS POR CATEGORÍA Y DIFICULTAD ---
+// --- GENERACIÓN DE CASOS (RENDER LIVE) ---
 document.getElementById('btn-generar').onclick = async () => {
     loadingOverlay.classList.remove('hidden');
     const categoria = document.getElementById('select-categoria').value;
@@ -80,6 +72,11 @@ document.getElementById('btn-generar').onclick = async () => {
         const contenedor = document.getElementById('contenedor-casos');
         contenedor.innerHTML = "";
 
+        if (casos[0].id === 0) {
+            alert("Error de IA: " + casos[0].descripcion);
+            return;
+        }
+
         casos.forEach(c => {
             const card = document.createElement('div');
             card.className = "bg-[#161d2f] border border-slate-800 p-8 rounded-[32px] cursor-pointer hover:border-[#c4a47c]/50 transition-all group";
@@ -96,14 +93,14 @@ document.getElementById('btn-generar').onclick = async () => {
             contenedor.appendChild(card);
         });
     } catch (e) {
-        console.error("Error al conectar con Python:", e);
-        alert("Asegúrate de que el servidor Python esté corriendo en el puerto 8000.");
+        console.error("Fallo de conexión:", e);
+        alert("El servidor de Render podría estar iniciando. Intenta de nuevo en 30 segundos.");
     } finally {
         loadingOverlay.classList.add('hidden');
     }
 };
 
-// --- SELECCIÓN DE ROL E INICIO DE AUDIENCIA ---
+// --- SELECCIÓN DE ROL ---
 function setRol(rol) {
     rolUsuario = rol;
     document.getElementById('modal-contexto').classList.add('hidden');
@@ -120,7 +117,7 @@ function setRol(rol) {
     startCrono();
 }
 
-// --- LÓGICA DE DEBATE (COMUNICACIÓN CON IA) ---
+// --- DEBATE ---
 async function enviarArgumento() {
     const texto = inputArgumento.value.trim();
     if (!texto) return;
@@ -157,19 +154,10 @@ async function enviarArgumento() {
     }
 }
 
-// --- ACTUALIZACIÓN DE MÉTRICAS Y GRÁFICO ---
+// --- UI Y MÉTRICAS ---
 function updateUI(an) {
     if (!an) return;
-    
-    // Barras de Progreso
-    const ids = { 
-        'legal': 'fundamentacion_legal', 
-        'logica': 'coherencia_logica', 
-        'retorica': 'persuasion_retorica', 
-        'procesal': 'tecnica_procesal', 
-        'terminos': 'uso_terminologia' 
-    };
-
+    const ids = { 'legal': 'fundamentacion_legal', 'logica': 'coherencia_logica', 'retorica': 'persuasion_retorica', 'procesal': 'tecnica_procesal', 'terminos': 'uso_terminologia' };
     for (let k in ids) {
         const valor = an[ids[k]];
         const barra = document.getElementById(`bar-${k}`);
@@ -179,33 +167,18 @@ function updateUI(an) {
             texto.innerText = `${valor}%`;
         }
     }
-
-    // Gráfico de Radar
     if (radarChart && an.habilidades) {
-        radarChart.data.datasets[0].data = [
-            an.habilidades.estrategia,
-            an.habilidades.objeciones,
-            an.habilidades.claridad,
-            an.habilidades.evidencia,
-            an.habilidades.psicologia
-        ];
+        radarChart.data.datasets[0].data = [an.habilidades.estrategia, an.habilidades.objeciones, an.habilidades.claridad, an.habilidades.evidencia, an.habilidades.psicologia];
         radarChart.update();
     }
-    
     document.getElementById('feedback-sutil').innerText = an.feedback_sutil;
 }
 
-// --- UTILIDADES (VOZ, CHAT, CRONÓMETRO) ---
+// --- UTILIDADES ---
 function addBubble(per, txt, type) {
     const bubble = document.createElement('div');
-    bubble.className = type === 'ia' 
-        ? "bg-white/5 border border-slate-800 p-6 rounded-3xl self-start max-w-[85%] shadow-xl" 
-        : "bg-[#1e293b] border border-slate-700 p-6 rounded-3xl self-end max-w-[85%] ml-auto shadow-2xl";
-    
-    bubble.innerHTML = `
-        <span class="text-[9px] uppercase font-black text-[#c4a47c] block mb-2 tracking-widest">${per}</span>
-        <p class="text-lg font-light leading-relaxed">${txt}</p>
-    `;
+    bubble.className = type === 'ia' ? "bg-white/5 border border-slate-800 p-6 rounded-3xl self-start max-w-[85%] shadow-xl" : "bg-[#1e293b] border border-slate-700 p-6 rounded-3xl self-end max-w-[85%] ml-auto shadow-2xl";
+    bubble.innerHTML = `<span class="text-[9px] uppercase font-black text-[#c4a47c] block mb-2 tracking-widest">${per}</span><p class="text-lg font-light leading-relaxed">${txt}</p>`;
     chatAudiencia.appendChild(bubble);
     chatAudiencia.scrollTo({ top: chatAudiencia.scrollHeight, behavior: 'smooth' });
 }
@@ -214,7 +187,6 @@ function hablar(t) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(t);
     utterance.lang = 'es-ES';
-    utterance.rate = 1.0;
     window.speechSynthesis.speak(utterance);
 }
 
@@ -231,30 +203,6 @@ function toggleContexto() {
     document.getElementById('panel-contexto').classList.toggle('translate-x-full');
 }
 
-// --- RECONOCIMIENTO DE VOZ ---
-const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (Speech) {
-    const rec = new Speech();
-    rec.lang = 'es-ES';
-    rec.continuous = false;
-
-    btnMicrofono.onclick = () => {
-        btnMicrofono.classList.add('mic-active');
-        rec.start();
-    };
-
-    rec.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        inputArgumento.value = transcript;
-        btnMicrofono.classList.remove('mic-active');
-        setTimeout(enviarArgumento, 800);
-    };
-
-    rec.onerror = () => btnMicrofono.classList.remove('mic-active');
-}
-
-// ... (Todo el código anterior de app.js se mantiene igual)
-
 function abrirInstrucciones() {
     document.getElementById('modal-instrucciones').classList.remove('hidden');
 }
@@ -263,10 +211,24 @@ function cerrarInstrucciones() {
     document.getElementById('modal-instrucciones').classList.add('hidden');
 }
 
-// Opcional: Abrir instrucciones automáticamente al cargar por primera vez
+// --- RECONOCIMIENTO DE VOZ ---
+const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (Speech) {
+    const rec = new Speech();
+    rec.lang = 'es-ES';
+    btnMicrofono.onclick = () => { btnMicrofono.classList.add('mic-active'); rec.start(); };
+    rec.onresult = (e) => {
+        inputArgumento.value = e.results[0][0].transcript;
+        btnMicrofono.classList.remove('mic-active');
+        setTimeout(enviarArgumento, 800);
+    };
+    rec.onerror = () => btnMicrofono.classList.remove('mic-active');
+}
+
+// --- CARGA INICIAL ---
 window.onload = () => {
     if(!localStorage.getItem('visitado')) {
         abrirInstrucciones();
         localStorage.setItem('visitado', 'true');
     }
-}
+};
