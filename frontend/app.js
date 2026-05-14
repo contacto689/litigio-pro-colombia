@@ -105,6 +105,11 @@ function setRol(rol) {
     rolUsuario = rol;
     document.getElementById('modal-contexto').classList.add('hidden');
     seccionPrincipal.classList.add('hidden');
+    
+    // --- LÍNEA CLAVE ---
+    // Quitamos el "display: none" que pusimos manualmente
+    salaAudiencia.style.display = 'grid'; 
+    // Y quitamos el hidden por si acaso
     salaAudiencia.classList.remove('hidden');
     
     document.getElementById('contexto-titulo').innerText = casoActual.titulo;
