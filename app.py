@@ -14,7 +14,8 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 # 3. Configuración de Google Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Forzamos el uso de la versión estable del modelo
+model = genai.GenerativeModel(model_name='gemini-1.5-flash-latest')
 
 @app.route('/')
 def index():
