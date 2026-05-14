@@ -77,30 +77,39 @@ def debatir():
     finalizar = turnos >= limite_turnos
     contraparte = "Fiscalía" if rol == "Abogado Defensor" else "Abogado Defensor"
 
+    # PROMPT CORREGIDO Y COMPLETO
     prompt = f"""
-    # Dentro de la ruta /debatir
-prompt = f"""
-Eres un litigante de élite ({contraparte}) en COLOMBIA.
-DIFICULTAD DE LA AUDIENCIA: {dificultad}.
+    Eres un litigante de élite ({contraparte}) en COLOMBIA.
+    DIFICULTAD DE LA AUDIENCIA: {dificultad}.
 
-NIVELES DE RIGOR:
-- Principiante: Sé pedagógico, comete errores leves para que el usuario los note y califica con benevolencia (60-100).
-- Intermedio: Usa lenguaje técnico estándar, exige fundamentos legales básicos y califica con objetividad (40-90).
-- Avanzado (Implacable): Sé agresivo jurídicamente, usa jurisprudencia compleja (Corte Constitucional/Suprema), no dejes pasar ninguna imprecisión y califica con extrema dureza (0-70).
+    NIVELES DE RIGOR:
+    - Principiante: Sé pedagógico, comete errores leves y califica con benevolencia (60-100).
+    - Intermedio: Usa lenguaje técnico estándar y califica con objetividad (40-90).
+    - Avanzado (Implacable): Sé agresivo, usa jurisprudencia compleja y califica con dureza (0-70).
 
-Caso: {caso}.
-Usuario ({rol}) argumenta: "{argumento}". Turno: {turnos}/8.
+    Caso: {caso}.
+    Usuario ({rol}) argumenta: "{argumento}". Turno: {turnos}/8.
 
-REGLAS DE ORO:
-1. Si la dificultad es AVANZADA, refuta cada punto con artículos específicos del Código General del Proceso o Código Penal.
-2. Califica el JSON de acuerdo al nivel: en 'Avanzado', un argumento sin cita legal NO debe superar el 20% en fundamentación_legal.
-... (resto del formato JSON)
-"""
+    Responde EXCLUSIVAMENTE en JSON puro:
+    {{
+      "respuesta_ia": "Refutación técnica aquí",
+      "analisis": {{
+        "fundamentacion_legal": 0, "coherencia_logica": 0, "persuasion_retorica": 0,
+        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Feedback breve",
+        "habilidades": {{ "estrategia": 0, "objeciones": 0, "claridad": 0, "evidencia": 0, "psicologia": 0 }}
+      }},
+      "finalizar": {str(finalizar).lower()},
+      "sentencia": "Solo si finalizar es true"
+    }}
+    """
     try:
         response = model.generate_content(prompt)
         texto = response.text.strip()
+        # Limpieza de markdown
         if "```json" in texto:
             texto = texto.split("```json")[1].split("```")[0].strip()
+        elif "```" in texto:
+            texto = texto.split("```")[1].split("```")[0].strip()
         return texto, 200, {'Content-Type': 'application/json'}
     except Exception as e:
         return jsonify({"error": str(e)}), 200
