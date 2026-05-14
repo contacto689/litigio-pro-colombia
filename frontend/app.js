@@ -1,13 +1,8 @@
-// --- CONFIGURACIÓN DINÁMICA ---
+// --- CONFIGURACIÓN PARA PRODUCCIÓN (RENDER) ---
+const URL_BASE = "https://litigio-pro-colombia.onrender.com"; 
 
-// window.location.origin detecta automáticamente si estás en:
-// https://simulador-juridico-pro.onrender.com o cualquier otra URL.
-const URL_BASE = window.location.origin; 
+console.log("🚀 Sistema conectado al estrado en:", URL_BASE);
 
-console.log("🚀 Conexión establecida en:", URL_BASE);
-
-// --- ESTADO GLOBAL ---
-// (El resto del código se mantiene igual...)
 // --- ESTADO GLOBAL ---
 let casoActual = null;
 let rolUsuario = "";
