@@ -5,49 +5,64 @@ import os
 import json
 from dotenv import load_dotenv
 
+# 1. Carga de variables de entorno
 load_dotenv()
 
+# 2. Configuración de Flask
 app = Flask(__name__, static_folder='frontend', static_url_path='')
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# 3. Configuración de Google Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash') # Usamos flash estable para consistencia en JSON
+model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
 
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
 
+# --- ENDPOINTS DE LA API ---
+
 @app.route('/generar-casos', methods=['POST'])
 def generar_casos():
+    """Genera EXACTAMENTE 5 expedientes detallados."""
     data = request.json
     categoria = data.get('categoria', 'Derecho Penal')
     dificultad = data.get('dificultad', 'Intermedio')
 
-    # Ajustamos la complejidad de los casos según la dificultad
-    guia_casos = {
-        "Principiante": "Casos con hechos claros, pruebas directas y una solución jurídica evidente.",
-        "Intermedio": "Casos con contradicciones leves entre testimonios y necesidad de citar códigos básicos.",
-        "Avanzado": "Casos complejos con vacíos probatorios, conflictos de derechos fundamentales y tecnicismos procesales."
-    }
-
+    # CAMBIO IMPORTANTE: Instrucción explícita de 5 casos y formato robusto
     prompt = f"""
-    Eres un Magistrado de Colombia. Genera EXACTAMENTE 5 casos de {categoria} (Nivel: {dificultad}).
-    Contexto del nivel: {guia_casos.get(dificultad, "")}
+    Eres un Magistrado experto en el sistema jurídico de COLOMBIA. 
+    Genera EXACTAMENTE 5 casos ficticios de {categoria} ambientados en COLOMBIA.
+    Nivel de complejidad: {dificultad}.
     
-    Cada 'descripcion' debe ser de 200 palabras.
-    Responde ÚNICAMENTE un array JSON puro:
+    REQUISITOS:
+    - Ubicación: Ciudades y barrios reales de Colombia.
+    - Base Legal: Bloque de constitucionalidad y leyes colombianas.
+    - Formato: Los 5 casos deben venir dentro de un único array JSON.
+
+    Responde EXCLUSIVAMENTE con el array JSON puro, sin explicaciones ni markdown:
     [
-      {{"id": 1, "titulo": "...", "descripcion": "..."}}
+      {{"id": 1, "titulo": "Caso 1", "descripcion": "Hechos..."}},
+      {{"id": 2, "titulo": "Caso 2", "descripcion": "Hechos..."}},
+      {{"id": 3, "titulo": "Caso 3", "descripcion": "Hechos..."}},
+      {{"id": 4, "titulo": "Caso 4", "descripcion": "Hechos..."}},
+      {{"id": 5, "titulo": "Caso 5", "descripcion": "Hechos..."}}
     ]
     """
     try:
-        response = model.generate_content(
-            prompt, 
-            generation_config={"response_mime_type": "application/json"}
-        )
-        return response.text, 200, {'Content-Type': 'application/json'}
+        response = model.generate_content(prompt)
+        # Limpieza más profunda: quitamos markdown y espacios innecesarios
+        texto = response.text.strip()
+        if "```json" in texto:
+            texto = texto.split("```json")[1].split("```")[0].strip()
+        elif "```" in texto:
+            texto = texto.split("```")[1].split("```")[0].strip()
+            
+        return texto, 200, {'Content-Type': 'application/json'}
     except Exception as e:
-        return jsonify([{"id": 0, "titulo": "Error", "descripcion": "Fallo al conectar con la IA."}]), 200
+        print(f"Error en generación: {e}")
+        # Retornamos un error que el frontend pueda pintar como una tarjeta
+        return jsonify([{"id": 0, "titulo": "Error de Conexión", "descripcion": "No se pudieron cargar los casos. Verifica tu API Key en Render."}]), 200
 
 @app.route('/debatir', methods=['POST'])
 def debatir():
@@ -56,65 +71,41 @@ def debatir():
     caso = data.get('caso', '')
     rol = data.get('rol', '')
     turnos = data.get('turnos', 0)
-    dificultad = data.get('dificultad', 'Principiante') # Valor por defecto
+    dificultad = data.get('dificultad', 'Intermedio')
 
-    # --- LÓGICA DE CALIBRACIÓN DE DIFICULTAD ---
-    config_dificultad = {
-        "Principiante": {
-            "personalidad": "Pedagógico y comprensivo. Valora más la intención que la técnica.",
-            "exigencia": "Califica generosamente (70-90) si el argumento tiene sentido común.",
-            "critica": "Da consejos constructivos y sencillos."
-        },
-        "Intermedio": {
-            "personalidad": "Litigante estándar. Exige coherencia y mención general de leyes.",
-            "exigencia": "Califica estrictamente (50-80). Solo da puntaje alto si hay base legal.",
-            "critica": "Señala errores lógicos y falta de sustento."
-        },
-        "Avanzado": {
-            "personalidad": "Fiscal implacable de la Corte Suprema. Detecta falacias y errores procedimentales.",
-            "exigencia": "Califica con dureza (10-60). Solo da más de 70 si cita artículos exactos y jurisprudencia.",
-            "critica": "Es mordaz y técnico. Ataca los puntos débiles del argumento sin piedad."
-        }
-    }
-    
-    conf = config_dificultad.get(dificultad, config_dificultad["Principiante"])
+    limite_turnos = 8 
+    finalizar = turnos >= limite_turnos
+    contraparte = "Fiscalía" if rol == "Abogado Defensor" else "Abogado Defensor"
 
     prompt = f"""
-    Eres un litigante experto en Colombia. Actúa como contraparte en una audiencia real.
-    Nivel de Dificultad: {dificultad}. 
-    TU PERSONALIDAD: {conf['personalidad']}
-    CRITERIO DE CALIFICACIÓN: {conf['exigencia']}
+    Eres un litigante de élite ({contraparte}) en COLOMBIA.
+    Audiencia nivel {dificultad}. Caso: {caso}.
+    Usuario ({rol}) argumenta: "{argumento}". Turno: {turnos}/8.
 
-    Caso: {caso}.
-    Usuario ({rol}) argumenta: "{argumento}".
-    Turno: {turnos}/8.
-
-    REGLAS DE ORO:
-    1. Si el usuario no cita leyes colombianas y el nivel es Avanzado, su puntaje en Fundamentación Legal debe ser inferior a 30.
-    2. Tu 'respuesta_ia' debe durar máximo 90 palabras y usar lenguaje jurídico colombiano.
-    3. El 'feedback_sutil' debe reflejar la dureza del nivel: {conf['critica']}
-
-    Responde ÚNICAMENTE en JSON:
+    REGLAS:
+    1. Cita leyes colombianas reales.
+    2. Responde en JSON puro con este formato:
     {{
-      "respuesta_ia": "...",
+      "respuesta_ia": "Refutación técnica",
       "analisis": {{
         "fundamentacion_legal": 0, "coherencia_logica": 0, "persuasion_retorica": 0,
-        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "...",
+        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Feedback",
         "habilidades": {{ "estrategia": 0, "objeciones": 0, "claridad": 0, "evidencia": 0, "psicologia": 0 }}
       }},
-      "finalizar": {str(turnos >= 8).lower()},
-      "sentencia": "..."
+      "finalizar": {str(finalizar).lower()},
+      "sentencia": "Solo si finalizar es true"
     }}
     """
     try:
-        response = model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "application/json"}
-        )
-        return response.text, 200, {'Content-Type': 'application/json'}
+        response = model.generate_content(prompt)
+        texto = response.text.strip()
+        if "```json" in texto:
+            texto = texto.split("```json")[1].split("```")[0].strip()
+        return texto, 200, {'Content-Type': 'application/json'}
     except Exception as e:
         return jsonify({"error": str(e)}), 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    # Configuración optimizada para Render
+    port = int(os.environ.get('PORT', 8000))
     app.run(host='0.0.0.0', port=port)

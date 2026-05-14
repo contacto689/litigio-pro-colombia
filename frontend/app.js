@@ -212,38 +212,17 @@ function cerrarInstrucciones() {
 }
 
 // --- RECONOCIMIENTO DE VOZ ---
-// Reemplaza la sección del SpeechRecognition en app.js por esto:
 const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (Speech) {
     const rec = new Speech();
-    rec.lang = 'es-CO'; // Cambiado a español Colombia
-    rec.continuous = false;
-    rec.interimResults = false;
-
-    btnMicrofono.onclick = () => { 
-        try {
-            btnMicrofono.classList.add('mic-active');
-            rec.start(); 
-        } catch (e) {
-            console.error("Error al iniciar micro:", e);
-            btnMicrofono.classList.remove('mic-active');
-        }
-    };
-
+    rec.lang = 'es-ES';
+    btnMicrofono.onclick = () => { btnMicrofono.classList.add('mic-active'); rec.start(); };
     rec.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        inputArgumento.value = transcript;
+        inputArgumento.value = e.results[0][0].transcript;
         btnMicrofono.classList.remove('mic-active');
-        // Pequeña vibración si el celular lo permite
-        if (navigator.vibrate) navigator.vibrate(50);
-        setTimeout(enviarArgumento, 500);
+        setTimeout(enviarArgumento, 800);
     };
-
-    rec.onerror = (e) => {
-        console.error("Error de voz:", e.error);
-        btnMicrofono.classList.remove('mic-active');
-        if(e.error === 'not-allowed') alert("Por favor, permite el acceso al micrófono en los ajustes de tu navegador.");
-    };
+    rec.onerror = () => btnMicrofono.classList.remove('mic-active');
 }
 
 // --- CARGA INICIAL ---
