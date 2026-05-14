@@ -78,24 +78,24 @@ def debatir():
     contraparte = "Fiscalía" if rol == "Abogado Defensor" else "Abogado Defensor"
 
     prompt = f"""
-    Eres un litigante de élite ({contraparte}) en COLOMBIA.
-    Audiencia nivel {dificultad}. Caso: {caso}.
-    Usuario ({rol}) argumenta: "{argumento}". Turno: {turnos}/8.
+    # Dentro de la ruta /debatir
+prompt = f"""
+Eres un litigante de élite ({contraparte}) en COLOMBIA.
+DIFICULTAD DE LA AUDIENCIA: {dificultad}.
 
-    REGLAS:
-    1. Cita leyes colombianas reales.
-    2. Responde en JSON puro con este formato:
-    {{
-      "respuesta_ia": "Refutación técnica",
-      "analisis": {{
-        "fundamentacion_legal": 0, "coherencia_logica": 0, "persuasion_retorica": 0,
-        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Feedback",
-        "habilidades": {{ "estrategia": 0, "objeciones": 0, "claridad": 0, "evidencia": 0, "psicologia": 0 }}
-      }},
-      "finalizar": {str(finalizar).lower()},
-      "sentencia": "Solo si finalizar es true"
-    }}
-    """
+NIVELES DE RIGOR:
+- Principiante: Sé pedagógico, comete errores leves para que el usuario los note y califica con benevolencia (60-100).
+- Intermedio: Usa lenguaje técnico estándar, exige fundamentos legales básicos y califica con objetividad (40-90).
+- Avanzado (Implacable): Sé agresivo jurídicamente, usa jurisprudencia compleja (Corte Constitucional/Suprema), no dejes pasar ninguna imprecisión y califica con extrema dureza (0-70).
+
+Caso: {caso}.
+Usuario ({rol}) argumenta: "{argumento}". Turno: {turnos}/8.
+
+REGLAS DE ORO:
+1. Si la dificultad es AVANZADA, refuta cada punto con artículos específicos del Código General del Proceso o Código Penal.
+2. Califica el JSON de acuerdo al nivel: en 'Avanzado', un argumento sin cita legal NO debe superar el 20% en fundamentación_legal.
+... (resto del formato JSON)
+"""
     try:
         response = model.generate_content(prompt)
         texto = response.text.strip()

@@ -212,17 +212,42 @@ function cerrarInstrucciones() {
 }
 
 // --- RECONOCIMIENTO DE VOZ ---
-const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+const Speech = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
+
 if (Speech) {
     const rec = new Speech();
-    rec.lang = 'es-ES';
-    btnMicrofono.onclick = () => { btnMicrofono.classList.add('mic-active'); rec.start(); };
-    rec.onresult = (e) => {
-        inputArgumento.value = e.results[0][0].transcript;
-        btnMicrofono.classList.remove('mic-active');
-        setTimeout(enviarArgumento, 800);
+    rec.lang = 'es-CO'; // Ajustado a Colombia
+    rec.continuous = false;
+    rec.interimResults = false;
+
+    btnMicrofono.onclick = () => {
+        try {
+            btnMicrofono.classList.add('mic-active');
+            rec.start();
+        } catch (e) {
+            console.error("Error al iniciar micro:", e);
+            btnMicrofono.classList.remove('mic-active');
+        }
     };
-    rec.onerror = () => btnMicrofono.classList.remove('mic-active');
+
+    rec.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        // Mostrar visualmente que se capturó algo antes de enviar
+        inputArgumento.value = transcript; 
+        btnMicrofono.classList.remove('mic-active');
+        enviarArgumento();
+    };
+
+    rec.onerror = (e) => {
+        console.error("Error de Speech:", e.error);
+        btnMicrofono.classList.remove('mic-active');
+        if(e.error === 'not-allowed') alert("Debes permitir el acceso al micrófono en los ajustes del sitio.");
+    };
+
+    rec.onend = () => btnMicrofono.classList.remove('mic-active');
+} else {
+    btnMicrofono.style.display = 'none';
+    alert("Tu navegador no soporta reconocimiento de voz. Prueba con Chrome o Safari actualizado.");
 }
 
 // --- CARGA INICIAL ---
