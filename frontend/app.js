@@ -1,5 +1,5 @@
 // --- CONFIGURACIÓN PARA PRODUCCIÓN (RENDER) ---
-const URL_BASE = "https://litigio-pro-colombia.onrender.com"; 
+const URL_BASE = "https://Simulador-juridico-Pro.onrender.com"; 
 
 console.log("🚀 Sistema conectado al estrado en:", URL_BASE);
 
