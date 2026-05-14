@@ -29,7 +29,7 @@ def generar_casos():
     categoria = data.get('categoria', 'Derecho Penal')
     dificultad = data.get('dificultad', 'Intermedio')
 
-    # CAMBIO IMPORTANTE: Instrucción explícita de 5 casos y formato robusto
+    # Instrucción explícita de 5 casos y formato robusto
     prompt = f"""
     Eres un Magistrado experto en el sistema jurídico de COLOMBIA. 
     Genera EXACTAMENTE 5 casos ficticios de {categoria} ambientados en COLOMBIA.
@@ -77,23 +77,34 @@ def debatir():
     finalizar = turnos >= limite_turnos
     contraparte = "Fiscalía" if rol == "Abogado Defensor" else "Abogado Defensor"
 
+    # LÓGICA DE EXIGENCIA SEGÚN DIFICULTAD SELECCIONADA
+    if dificultad == "PRINCIPIANTE":
+        guia_calificacion = "Sé pedagógico. Si el argumento tiene sentido lógico, califica alto (70-90). Guía al usuario si comete errores."
+    elif dificultad == "AVANZADO":
+        guia_calificacion = "Sé un fiscal/abogado implacable. EXIGE artículos específicos de la ley colombiana. Si no cita leyes o es vago, califica con menos de 40."
+    else:
+        guia_calificacion = "Exigencia profesional estándar. Requiere términos jurídicos correctos. Notas entre 50 y 80."
+
     prompt = f"""
     Eres un litigante de élite ({contraparte}) en COLOMBIA.
     Audiencia nivel {dificultad}. Caso: {caso}.
     Usuario ({rol}) argumenta: "{argumento}". Turno: {turnos}/8.
 
-    REGLAS:
+    REGLAS DE NIVEL:
+    {guia_calificacion}
+
+    REGLAS GENERALES:
     1. Cita leyes colombianas reales.
     2. Responde en JSON puro con este formato:
     {{
       "respuesta_ia": "Refutación técnica",
       "analisis": {{
         "fundamentacion_legal": 0, "coherencia_logica": 0, "persuasion_retorica": 0,
-        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Feedback",
+        "tecnica_procesal": 0, "uso_terminologia": 0, "feedback_sutil": "Feedback según dificultad",
         "habilidades": {{ "estrategia": 0, "objeciones": 0, "claridad": 0, "evidencia": 0, "psicologia": 0 }}
       }},
       "finalizar": {str(finalizar).lower()},
-      "sentencia": "Solo si finalizar es true"
+      "sentencia": "Solo si finalizar es true. Emite un fallo 'En nombre de la República de Colombia'."
     }}
     """
     try:
@@ -101,8 +112,12 @@ def debatir():
         texto = response.text.strip()
         if "```json" in texto:
             texto = texto.split("```json")[1].split("```")[0].strip()
+        elif "```" in texto:
+            texto = texto.split("```")[1].split("```")[0].strip()
+            
         return texto, 200, {'Content-Type': 'application/json'}
     except Exception as e:
+        print(f"Error en debate: {e}")
         return jsonify({"error": str(e)}), 200
 
 if __name__ == '__main__':
